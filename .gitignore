@@ -1,0 +1,31 @@
+# Environments
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# FAISS Vectorstore
+vectorstore/
+
+# Data
+data/*
+!data/sample_knowledge.txt
+
+# Streamlit
+.streamlit/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

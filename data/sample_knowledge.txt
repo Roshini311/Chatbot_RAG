@@ -1,0 +1,18 @@
+AI Knowledge Base Architecture Overview
+=======================================
+
+Project Overview:
+This project is an advanced AI Knowledge Assistant designed to use Retrieval-Augmented Generation (RAG) to answer questions based entirely on uploaded documents.
+
+Architecture Details:
+- The backend API is constructed using Python 3 and FastAPI, which handles all complex operations.
+- The user interface is built using Streamlit, providing an interactive chat experience and an easy-to-use document upload sidebar.
+- We use the `all-MiniLM-L6-v2` model via HuggingFace's `SentenceTransformers` to embed texts into semantic vector representations locally, which saves cost and increases processing speed.
+- Vectors are stored efficiently and queried using the Facebook AI Similarity Search (FAISS) library to find the most relevant context chunks when you ask a question.
+- Finally, the top retrieved chunks are presented to OpenAI's GPT-3.5-turbo language model along with the user's original question to generate a human-readable, precise answer.
+
+Maintenance Notes:
+If you experience any connection issues or errors in generating responses, make sure that the `OPENAI_API_KEY` environment variable is strictly and properly configured in the `.env` file at the root of the project.
+
+Future Expansion:
+While FAISS is used for local memory, Pinecone can be implemented for a scalable, cloud-based vector storage solution if the database groes significantly large.
