@@ -19,8 +19,5 @@ COPY . .
 # Expose the port for Streamlit
 EXPOSE 8501
 
-# Make the start script executable
-RUN chmod +x start.sh
-
-# Run the start script
-CMD ["./start.sh"]
+# Bypass start.sh to avoid Windows CRLF line ending crashes in Linux
+CMD uvicorn backend.main:app --host 0.0.0.0 --port 8000 & streamlit run frontend/app.py --server.port ${PORT:-8501} --server.address 0.0.0.0
