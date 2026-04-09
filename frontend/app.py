@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import os
 
 # Set page configuration for a premium look
 st.set_page_config(
@@ -40,8 +41,8 @@ st.markdown("""
 st.title("🤖 AI Knowledge Assistant")
 st.markdown("Upload your documents (PDF, TXT, DOCX) in the sidebar and ask questions about them!")
 
-# Backend URL
-BACKEND_URL = "http://localhost:8000"
+# Backend URL - Use local container communication for Docker, or external if specified
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 # Sidebar for document upload
 with st.sidebar:
