@@ -89,7 +89,6 @@ with tab1:
                         data = resp.json()
                         st.success(f"Successfully processed '{data['file_name']}'!")
                         st.json(data)
-                        st.rerun()
                     else:
                         st.error(f"Upload failed: {resp.json().get('detail', 'Unknown error')}")
                 except Exception as e:
@@ -114,8 +113,7 @@ with tab1:
                         if st.button(f"Delete {doc['file_name']}", key=f"del_{doc['doc_id']}"):
                             del_resp = requests.delete(f"{BACKEND_URL}/documents/{doc['doc_id']}", timeout=5)
                             if del_resp.status_code == 200:
-                                st.success(f"Deleted {doc['file_name']}")
-                                st.rerun()
+                                st.success(f"Deleted {doc['file_name']}. Click Refresh Registry below.")
             else:
                 st.info("No documents uploaded yet. Upload a PDF above to begin.")
     except Exception as e:
@@ -230,9 +228,6 @@ with tab3:
 with tab4:
     st.header("📈 System Analytics & Usage Metrics")
     st.markdown("Track index size, processed pages, query history, and **TensorFlow domain classification statistics**.")
-
-    if st.button("🔄 Refresh Metrics"):
-        st.rerun()
 
     try:
         stats_resp = requests.get(f"{BACKEND_URL}/analytics/stats", timeout=5)
