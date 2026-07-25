@@ -6,21 +6,15 @@ from dotenv import load_dotenv
 
 from config.settings import settings
 from src.database.base import init_db
-from src.ml.train_classifier import train_and_save_classifier
 from routes import document_routes, search_routes, analysis_routes, analytics_routes
 
 load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup sequence
+    # Quick, non-blocking startup sequence
     print("Initializing Database & Core Systems...")
     init_db()
-    
-    if not os.path.exists(settings.MODEL_PATH) and not os.path.exists(settings.MODEL_PATH.replace(".h5", ".pkl")):
-        print("Model weights not found. Training TensorFlow / Machine Learning Document Classifier...")
-        train_and_save_classifier()
-        
     yield
     # Shutdown sequence
 

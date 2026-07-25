@@ -42,7 +42,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+# Backend URL - Use explicit IPv4 loopback for reliable Docker container inter-process communication
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 st.title("🔬 AI Research & Knowledge Assistant")
 st.caption("Enterprise RAG Engine • TensorFlow ML Classifier • Page-Level Citations • Comparative Analytics")
