@@ -13,8 +13,20 @@ from src.rag.qa_chain import RAGQuestionAnswering
 
 router = APIRouter(prefix="/search", tags=["Semantic Search & RAG QA"])
 
-vector_manager = VectorStoreManager()
-rag_chain = RAGQuestionAnswering(vector_manager=vector_manager)
+_vector_manager = None
+_rag_chain = None
+
+def get_vector_manager():
+    global _vector_manager
+    if _vector_manager is None:
+        _vector_manager = VectorStoreManager()
+    return _vector_manager
+
+def get_rag_chain():
+    global _rag_chain
+    if _rag_chain is None:
+        _rag_chain = RAGQuestionAnswering(vector_manager=get_vector_manager())
+    return _rag_chain
 
 class SemanticSearchRequest(BaseModel):
     query: str
@@ -34,7 +46,8 @@ def semantic_search(request: SemanticSearchRequest):
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
-    results = vector_manager.search_similarity(
+    vm = get_vector_manager()
+    results = vm.search_similarity(
         query=request.query, 
         k=request.top_k or 4, 
         doc_ids=request.doc_ids
@@ -61,7 +74,8 @@ def question_answering(request: QARequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
     start_time = time.time()
-    result = rag_chain.answer_question(
+    rag = get_rag_chain()
+    result = rag.answer_question(
         query=request.query,
         session_history=request.session_history or "",
         doc_ids=request.doc_ids

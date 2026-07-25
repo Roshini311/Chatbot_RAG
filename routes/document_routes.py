@@ -14,17 +14,42 @@ from src.vector_store.manager import VectorStoreManager
 
 router = APIRouter(prefix="/documents", tags=["Document Management"])
 
-pdf_parser = PDFParser()
-chunker = DocumentChunker()
-predictor = DocumentClassifierPredictor()
-vector_manager = VectorStoreManager()
+# Lazy singletons
+_pdf_parser = None
+_chunker = None
+_predictor = None
+_vector_manager = None
+
+def get_pdf_parser():
+    global _pdf_parser
+    if _pdf_parser is None:
+        _pdf_parser = PDFParser()
+    return _pdf_parser
+
+def get_chunker():
+    global _chunker
+    if _chunker is None:
+        _chunker = DocumentChunker()
+    return _chunker
+
+def get_predictor():
+    global _predictor
+    if _predictor is None:
+        _predictor = DocumentClassifierPredictor()
+    return _predictor
+
+def get_vector_manager():
+    global _vector_manager
+    if _vector_manager is None:
+        _vector_manager = VectorStoreManager()
+    return _vector_manager
 
 os.makedirs(settings.RAW_DOCUMENTS_DIR, exist_ok=True)
 
 @router.post("/upload")
 async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
-    Uploads a PDF document, extracts metadata, predicts domain category with TF model,
+    Uploads a PDF document, extracts metadata, predicts domain category,
     chunks text with page numbers, and indexes into FAISS vector database.
     """
     if not file.filename.lower().endswith(".pdf"):
@@ -48,8 +73,13 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
     db.commit()
 
     try:
+        parser = get_pdf_parser()
+        chunker = get_chunker()
+        predictor = get_predictor()
+        vector_mgr = get_vector_manager()
+
         # 1. Parse pages
-        pages_data = pdf_parser.extract_text_with_metadata(save_path, doc_id, file.filename)
+        pages_data = parser.extract_text_with_metadata(save_path, doc_id, file.filename)
         total_pages = len(pages_data)
 
         full_text = "\n".join([p["text"] for p in pages_data])
@@ -62,7 +92,7 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         total_chunks = len(chunks)
 
         # 4. Store embeddings in vector store
-        vector_manager.add_chunks(chunks)
+        vector_mgr.add_chunks(chunks)
 
         # Update DB record
         db_doc.total_pages = total_pages

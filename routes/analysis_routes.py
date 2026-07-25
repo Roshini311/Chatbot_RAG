@@ -9,10 +9,34 @@ from src.ml.predictor import DocumentClassifierPredictor
 
 router = APIRouter(prefix="/analysis", tags=["Summarization & Comparison"])
 
-vector_manager = VectorStoreManager()
-summarizer = DocumentSummarizer(vector_manager=vector_manager)
-comparator = DocumentComparator(vector_manager=vector_manager)
-predictor = DocumentClassifierPredictor()
+_vector_manager = None
+_summarizer = None
+_comparator = None
+_predictor = None
+
+def get_vector_manager():
+    global _vector_manager
+    if _vector_manager is None:
+        _vector_manager = VectorStoreManager()
+    return _vector_manager
+
+def get_summarizer():
+    global _summarizer
+    if _summarizer is None:
+        _summarizer = DocumentSummarizer(vector_manager=get_vector_manager())
+    return _summarizer
+
+def get_comparator():
+    global _comparator
+    if _comparator is None:
+        _comparator = DocumentComparator(vector_manager=get_vector_manager())
+    return _comparator
+
+def get_predictor():
+    global _predictor
+    if _predictor is None:
+        _predictor = DocumentClassifierPredictor()
+    return _predictor
 
 class SummarizeRequest(BaseModel):
     doc_id: str
@@ -30,7 +54,8 @@ def summarize_document(request: SummarizeRequest):
     """
     Generates multi-tier executive and technical summary for a document.
     """
-    result = summarizer.summarize_document(request.doc_id, file_name=request.file_name or "")
+    s = get_summarizer()
+    result = s.summarize_document(request.doc_id, file_name=request.file_name or "")
     return result
 
 @router.post("/compare")
@@ -38,13 +63,15 @@ def compare_documents(request: CompareRequest):
     """
     Compares methodologies, advantages, and similarities across multiple documents.
     """
-    result = comparator.compare_documents(request.doc_ids, file_names=request.file_names)
+    c = get_comparator()
+    result = c.compare_documents(request.doc_ids, file_names=request.file_names)
     return result
 
 @router.post("/classify")
 def classify_text(request: ClassifyRequest):
     """
-    Classifies input text into domain categories using TensorFlow ML model.
+    Classifies input text into domain categories using ML model.
     """
-    category = predictor.predict_category(request.text)
+    p = get_predictor()
+    category = p.predict_category(request.text)
     return {"text_snippet": request.text[:200], "predicted_category": category}
