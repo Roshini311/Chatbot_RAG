@@ -42,7 +42,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Backend URL - Use explicit IPv4 loopback for reliable Docker container inter-process communication
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 st.title("🔬 AI Research & Knowledge Assistant")
@@ -82,14 +81,15 @@ with tab1:
     uploaded_file = st.file_uploader("Select a PDF file", type=["pdf"])
     if uploaded_file is not None:
         if st.button("🚀 Process & Auto-Categorize Document"):
-            with st.spinner("Parsing pages, running TensorFlow classifier, and indexing chunks..."):
+            with st.spinner("Extracting pages, categorizing, and indexing chunks..."):
                 try:
                     files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
-                    resp = requests.post(f"{BACKEND_URL}/documents/upload", files=files)
+                    resp = requests.post(f"{BACKEND_URL}/documents/upload", files=files, timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         st.success(f"Successfully processed '{data['file_name']}'!")
                         st.json(data)
+                        st.rerun()
                     else:
                         st.error(f"Upload failed: {resp.json().get('detail', 'Unknown error')}")
                 except Exception as e:
@@ -99,7 +99,7 @@ with tab1:
     st.subheader("📚 Ingested Document Metadata Registry")
     
     try:
-        list_resp = requests.get(f"{BACKEND_URL}/documents/list")
+        list_resp = requests.get(f"{BACKEND_URL}/documents/list", timeout=5)
         if list_resp.status_code == 200:
             docs = list_resp.json()
             if docs:
@@ -112,7 +112,7 @@ with tab1:
                         col4.metric("Status", doc['processing_status'])
 
                         if st.button(f"Delete {doc['file_name']}", key=f"del_{doc['doc_id']}"):
-                            del_resp = requests.delete(f"{BACKEND_URL}/documents/{doc['doc_id']}")
+                            del_resp = requests.delete(f"{BACKEND_URL}/documents/{doc['doc_id']}", timeout=5)
                             if del_resp.status_code == 200:
                                 st.success(f"Deleted {doc['file_name']}")
                                 st.rerun()
@@ -151,7 +151,7 @@ with tab2:
             with st.spinner("Searching vector index & synthesizing context-grounded answer..."):
                 try:
                     payload = {"query": query, "session_history": ""}
-                    resp = requests.post(f"{BACKEND_URL}/search/qa", json=payload)
+                    resp = requests.post(f"{BACKEND_URL}/search/qa", json=payload, timeout=30)
                     if resp.status_code == 200:
                         res_data = resp.json()
                         answer = res_data["answer"]
@@ -188,7 +188,7 @@ with tab3:
     st.header("📊 Multi-Document Comparison & Summarization")
 
     try:
-        list_resp = requests.get(f"{BACKEND_URL}/documents/list")
+        list_resp = requests.get(f"{BACKEND_URL}/documents/list", timeout=5)
         docs = list_resp.json() if list_resp.status_code == 200 else []
     except Exception:
         docs = []
@@ -203,7 +203,7 @@ with tab3:
         
         if st.button("Generate Summary") and selected_doc_id:
             with st.spinner("Generating multi-tier summary..."):
-                resp = requests.post(f"{BACKEND_URL}/analysis/summarize", json={"doc_id": selected_doc_id, "file_name": doc_options.get(selected_doc_id, "")})
+                resp = requests.post(f"{BACKEND_URL}/analysis/summarize", json={"doc_id": selected_doc_id, "file_name": doc_options.get(selected_doc_id, "")}, timeout=30)
                 if resp.status_code == 200:
                     sum_data = resp.json()
                     st.markdown(sum_data.get("summary", "No summary content generated."))
@@ -217,7 +217,7 @@ with tab3:
         if st.button("Compare Selected Documents") and len(selected_compare_ids) >= 2:
             with st.spinner("Analyzing comparative methodologies & pros/cons..."):
                 fnames = [doc_options[did] for did in selected_compare_ids]
-                resp = requests.post(f"{BACKEND_URL}/analysis/compare", json={"doc_ids": selected_compare_ids, "file_names": fnames})
+                resp = requests.post(f"{BACKEND_URL}/analysis/compare", json={"doc_ids": selected_compare_ids, "file_names": fnames}, timeout=30)
                 if resp.status_code == 200:
                     cmp_data = resp.json()
                     st.markdown(cmp_data.get("comparison", "No comparison generated."))
@@ -235,7 +235,7 @@ with tab4:
         st.rerun()
 
     try:
-        stats_resp = requests.get(f"{BACKEND_URL}/analytics/stats")
+        stats_resp = requests.get(f"{BACKEND_URL}/analytics/stats", timeout=5)
         if stats_resp.status_code == 200:
             stats = stats_resp.json()
             
