@@ -19,7 +19,8 @@ data/*
 !data/sample_knowledge.txt
 
 # Streamlit
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 
 # OS generated files
 .DS_Store
