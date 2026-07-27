@@ -16,10 +16,10 @@ class DocumentComparator:
 
         contexts_by_doc = {}
         for idx, did in enumerate(doc_ids):
-            fname = file_names[idx] if file_names and idx < len(file_names) else f"Document {did}"
-            docs = self.vector_manager.search_similarity("methodology architecture results advantages performance", k=4, doc_ids=[did])
+            fname = file_names[idx] if file_names and idx < len(file_names) else f"Document {did[:8]}"
+            docs = self.vector_manager.get_chunks_by_doc_id(did, k=5)
             combined = "\n".join([d.page_content for d in docs])
-            contexts_by_doc[fname] = combined[:2000]
+            contexts_by_doc[fname] = combined[:2000] if combined else "No context found."
 
         combined_prompt_context = ""
         for name, text in contexts_by_doc.items():
@@ -56,11 +56,11 @@ Provide a comparative analysis covering:
         res = "### Multi-Document Comparative Overview\n\n"
         for fname, text in contexts.items():
             res += f"#### 📄 {fname}\n"
-            res += f"• **Sample Context**: {text[:250]}...\n\n"
+            res += f"• **Extracted Context**: {text[:250]}...\n\n"
 
-        res += """### Comparative Summary
-• **Methodologies**: Documents present distinct analytical approaches and technical focus areas.
-• **Similarities**: All analyzed documents contribute to the enterprise knowledge domain.
-• **Recommendation**: Review detailed page citations for deep cross-document verification.
+        res += """### Comparative Breakdown
+• **Methodologies**: The uploaded documents provide complementary domain perspectives.
+• **Similarities**: All files are successfully indexed and tracked with page citations.
+• **Implementation Approaches**: Use RAG QA tab for citation-grounded cross-document queries.
 """
         return res
