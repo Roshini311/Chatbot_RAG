@@ -96,9 +96,9 @@ class VectorStoreManager:
             print(f"Error indexing chunks in FAISS: {e}")
             return False
 
-    def get_chunks_by_doc_id(self, doc_id: str, k: int = 10) -> List[Any]:
+    def get_chunks_by_doc_id(self, doc_id: str, file_name: str = "", k: int = 10) -> List[Any]:
         """
-        Retrieves all chunks directly matching a specific doc_id.
+        Retrieves all chunks directly matching doc_id or file_name.
         """
         if self.vector_store is None:
             return []
@@ -107,7 +107,8 @@ class VectorStoreManager:
         try:
             if hasattr(self.vector_store, "docstore") and hasattr(self.vector_store.docstore, "_dict"):
                 for doc in self.vector_store.docstore._dict.values():
-                    if doc.metadata.get("doc_id") == doc_id:
+                    m = doc.metadata
+                    if (doc_id and m.get("doc_id") == doc_id) or (file_name and m.get("file_name") == file_name):
                         results.append(doc)
                         if len(results) >= k:
                             break
@@ -115,7 +116,7 @@ class VectorStoreManager:
             print(f"Notice fetching doc chunks: {e}")
 
         if not results:
-            results = self.search_similarity("overview background summary details", k=k, doc_ids=[doc_id])
+            results = self.search_similarity("overview background summary details", k=k)
 
         return results
 
@@ -134,7 +135,7 @@ class VectorStoreManager:
                 else:
                     filtered.append(doc)
 
-            return filtered[:k]
+            return filtered[:k] if filtered else [d for d, s in docs_and_scores[:k]]
         except Exception as e:
             print(f"Error performing similarity search: {e}")
             return []

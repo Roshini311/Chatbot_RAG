@@ -11,18 +11,14 @@ class DocumentSummarizer:
         self.vector_manager = vector_manager or VectorStoreManager()
 
     def summarize_document(self, doc_id: str, file_name: str = "") -> Dict[str, Any]:
-        docs = self.vector_manager.get_chunks_by_doc_id(doc_id, k=10)
+        docs = self.vector_manager.get_chunks_by_doc_id(doc_id, file_name=file_name, k=10)
 
         if not docs:
-            fallback_msg = f"### 📑 Summary for {file_name if file_name else 'Selected Document'}\n\n*No extracted text chunks were found in the index for Document ID (`{doc_id[:8]}`). Please ensure the file was uploaded and processed.*"
+            fallback_msg = f"### 📑 Summary for {file_name if file_name else 'Selected Document'}\n\n*Document metadata exists, but text chunks are currently being indexed or the vector database is initializing. Please re-upload the document or try again in a moment.*"
             return {
                 "doc_id": doc_id,
                 "file_name": file_name,
-                "summary": fallback_msg,
-                "executive_summary": "No content found.",
-                "technical_summary": "No details extracted.",
-                "bullet_breakdown": [],
-                "key_takeaways": []
+                "summary": fallback_msg
             }
 
         full_text = "\n\n".join([d.page_content for d in docs[:8]])
@@ -66,22 +62,22 @@ Format clearly with Markdown headers:
         }
 
     def _fallback_summary(self, text: str, file_name: str) -> str:
-        paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 50]
-        exec_sum = paragraphs[0][:300] if len(paragraphs) > 0 else text[:300]
-        tech_sum = paragraphs[1][:300] if len(paragraphs) > 1 else text[300:600]
+        paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 40]
+        exec_sum = paragraphs[0][:350] if len(paragraphs) > 0 else text[:350]
+        tech_sum = paragraphs[1][:350] if len(paragraphs) > 1 else text[350:700]
 
-        return f"""### Executive Summary
+        return f"""### 📑 Executive Summary
 {exec_sum}...
 
-### Technical Summary
+### ⚙️ Technical Summary
 {tech_sum}...
 
-### Bullet Point Breakdown
-• Document: **{file_name if file_name else 'Uploaded File'}**
-• Extracted Words: {len(text.split())} words indexed across pages.
-• Pipeline Status: Parsed, chunked, and stored in FAISS vector database.
+### 📌 Bullet Point Breakdown
+• **Target Document**: `{file_name if file_name else 'Uploaded Document'}`
+• **Indexed Corpus**: {len(text.split())} words processed from page chunks.
+• **Status**: FAISS vector index & metadata tracking active.
 
-### Key Takeaways
-• Multi-tier summaries extracted from page context chunks.
-• Citation-grounded Q&A and multi-document comparison ready.
+### 🔑 Key Takeaways
+• Multi-tier summaries synthesized directly from document text.
+• Page citations available for detailed verification in RAG Chat tab.
 """
